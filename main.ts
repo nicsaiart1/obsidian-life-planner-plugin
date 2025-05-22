@@ -7,6 +7,7 @@ import { HabitTrackerViewObsidian, VIEW_TYPE_HABIT_TRACKER } from './src/modules
 import { RoutineBuilderViewObsidian, VIEW_TYPE_ROUTINE_BUILDER } from './src/modules/habits-routines/ui/RoutineBuilderViewObsidian';
 import { JournalEditorObsidianView, VIEW_TYPE_JOURNAL_EDITOR } from './src/modules/journaling-reflection/ui/JournalEditorObsidianView';
 import { MoodLogObsidianView, VIEW_TYPE_MOOD_LOG } from './src/modules/journaling-reflection/ui/MoodLogObsidianView';
+import { ProjectsTasksObsidianView, VIEW_TYPE_PROJECTS_TASKS } from './src/modules/projects-tasks/ui/ProjectsTasksObsidianView';
 
 export default class LifePlannerPlugin extends Plugin {
   settings: LifePlannerSettings;
@@ -38,6 +39,10 @@ export default class LifePlannerPlugin extends Plugin {
         VIEW_TYPE_MOOD_LOG,
         (leaf) => new MoodLogObsidianView(leaf)
     );
+    this.registerView(
+        VIEW_TYPE_PROJECTS_TASKS,
+        (leaf) => new ProjectsTasksObsidianView(leaf)
+    );
 
     // Add Commands
     this.addCommand({
@@ -51,6 +56,20 @@ export default class LifePlannerPlugin extends Plugin {
                 active: true,
             });
             this.app.workspace.revealLeaf(leaf); // Reveal the leaf
+        },
+    });
+
+    this.addCommand({
+        id: 'open-projects-tasks-view',
+        name: 'Projects & Tasks: Open View',
+        callback: () => {
+            this.app.workspace.detachLeavesOfType(VIEW_TYPE_PROJECTS_TASKS);
+            const leaf = this.app.workspace.getLeaf(true);
+            leaf.setViewState({
+                type: VIEW_TYPE_PROJECTS_TASKS,
+                active: true,
+            });
+            this.app.workspace.revealLeaf(leaf);
         },
     });
 
@@ -158,6 +177,16 @@ export default class LifePlannerPlugin extends Plugin {
         const leaf = this.app.workspace.getLeaf(true);
         leaf.setViewState({
             type: VIEW_TYPE_HABIT_TRACKER,
+            active: true,
+        });
+        this.app.workspace.revealLeaf(leaf);
+    });
+
+    this.addRibbonIcon('check-square', 'Open Projects & Tasks', () => {
+        this.app.workspace.detachLeavesOfType(VIEW_TYPE_PROJECTS_TASKS);
+        const leaf = this.app.workspace.getLeaf(true);
+        leaf.setViewState({
+            type: VIEW_TYPE_PROJECTS_TASKS,
             active: true,
         });
         this.app.workspace.revealLeaf(leaf);
