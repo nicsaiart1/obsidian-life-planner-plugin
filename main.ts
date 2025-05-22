@@ -1,4 +1,4 @@
-import { Plugin, Notice } from 'obsidian'; // Added Notice
+import { Plugin, Notice, TFile, normalizePath } from 'obsidian'; // Added Notice, TFile, normalizePath
 import YearlyDashboard from './ui/YearlyDashboard.svelte'; // Optional test import
 import { LifePlannerSettingTab, LifePlannerSettings, DEFAULT_SETTINGS } from './src/settings'; // Adjusted path
 import { TimeBlockingView, TIME_BLOCKING_VIEW_TYPE } from './src/views/TimeBlockingView'; // Added
@@ -6,6 +6,10 @@ import { BacklogView, BACKLOG_VIEW_TYPE } from './src/views/BacklogView'; // Add
 import { pomodoroTimer, logPomodoroSession, initPomodoroTracker, PomodoroSession } from './src/modules/time-management/PomodoroTracker'; // Added
 import { setDisplayFocusUICallback, enterFocusMode, exitFocusMode, isFocusModeActive } from './src/modules/uihelpers/FocusModeManager'; // Added
 import FocusModeDisplay from './src/ui/FocusModeDisplay.svelte'; // Added
+import { getValuesFilePath, loadValues } from './src/modules/goal-alignment/ValuesManager'; // Added
+// import { createGoal, CreateGoalParams, getGoalProgress } from './src/modules/goal-alignment/GoalManager'; // createGoal and CreateGoalParams are now used via the Modal
+import { getGoalProgress, generateBurndownSnapshotString, buildGoalHierarchyText } from './src/modules/goal-alignment/GoalManager'; // Added getGoalProgress, generateBurndownSnapshotString, buildGoalHierarchyText
+import { GoalCreationObsidianModal } from './src/modals/GoalCreationModal'; // Added
 
 // FullCalendar CSS Imports
 import '@fullcalendar/core/main.css';
@@ -130,6 +134,184 @@ export default class LifePlannerPlugin extends Plugin {
         enterFocusMode(title || "Focus", details || undefined);
       }
     });
+
+    // Define/Review Personal Values Command
+    this.addCommand({
+      id: 'define-review-personal-values',
+      name: 'Define/Review Personal Values',
+      callback: async () => {
+          const filePath = getValuesFilePath();
+          let file = this.app.vault.getAbstractFileByPath(filePath);
+
+          // Ensure file exists, creating it via loadValues if necessary
+          if (!(file instanceof TFile)) {
+              // loadValues should create it if it's missing
+              await loadValues(this.app); 
+              file = this.app.vault.getAbstractFileByPath(filePath); // Try to get it again
+              
+              if (!(file instanceof TFile)) {
+                  new Notice(`Error: Could not create or find the values file at ${filePath}.`);
+                  console.error(`Failed to ensure existence of values file: ${filePath}`);
+                  return;
+              }
+          }
+          
+          // Open the file
+          const leaf = this.app.workspace.getLeaf(true); // Get a leaf, true for 'new leaf if needed'
+          await leaf.openFile(file as TFile);
+      }
+    });
+
+    // Create New Goal Command
+    this.addCommand({
+      id: 'create-new-goal',
+      name: 'Create New Goal',
+      callback: () => {
+        new GoalCreationObsidianModal(this.app).open();
+      }
+    });
+
+    // Show Current Goal Progress Command
+    this.addCommand({
+      id: 'show-current-goal-progress',
+      name: 'Show Current Goal Progress',
+      checkCallback: (checking: boolean) => {
+          const activeFile = this.app.workspace.getActiveFile();
+
+          if (!activeFile || !(activeFile instanceof TFile)) {
+              return false;
+          }
+
+          const fm = this.app.metadataCache.getFileCache(activeFile)?.frontmatter;
+          
+          let isGoalNote = false;
+          if (fm && fm.type) {
+              if (typeof fm.type === 'string') {
+                isGoalNote = fm.type === 'goal';
+              } else if (Array.isArray(fm.type)) {
+                isGoalNote = fm.type.includes('goal');
+              }
+          }
+
+          if (!isGoalNote) {
+              return false; // Not a goal note
+          }
+
+          if (!checking) {
+              // Execute the command
+              getGoalProgress(this.app, activeFile as TFile).then(progress => {
+                  new Notice(`Goal '${activeFile.basename}': ${progress.completed}/${progress.total} tasks complete (${progress.percentage}%)`);
+              }).catch(error => {
+                  new Notice("Could not calculate goal progress. See console for details.");
+                  console.error("Error calculating goal progress:", error);
+              });
+          }
+          
+          return true; // Command is available
+      }
+    });
+
+    // Log Goal Progress Snapshot Command
+    this.addCommand({
+      id: 'log-goal-progress-snapshot',
+      name: 'Log Goal Progress Snapshot',
+      checkCallback: (checking: boolean) => {
+        const activeFile = this.app.workspace.getActiveFile();
+
+        if (!activeFile || !(activeFile instanceof TFile)) {
+          return false;
+        }
+
+        const fm = this.app.metadataCache.getFileCache(activeFile)?.frontmatter;
+        let isGoalNote = false;
+        if (fm && fm.type) {
+            if (typeof fm.type === 'string') {
+                isGoalNote = fm.type === 'goal';
+            } else if (Array.isArray(fm.type)) {
+                isGoalNote = fm.type.includes('goal');
+            }
+        }
+
+        if (!isGoalNote) {
+          return false; // Not a goal note
+        }
+
+        if (!checking) {
+          // Execute the command
+          generateBurndownSnapshotString(this.app, activeFile as TFile).then(async (snapshotString) => {
+            if (snapshotString.startsWith("Error generating")) {
+              new Notice(snapshotString);
+              return;
+            }
+
+            const currentContent = await this.app.vault.read(activeFile as TFile);
+            const progressLogHeader = "\n## Progress Log"; // Ensure newline at start for separation
+            const headerIndex = currentContent.lastIndexOf(progressLogHeader.trim()); // Use trim for matching
+
+            let newContent: string;
+            const newLogEntry = "\n- " + snapshotString;
+
+            if (headerIndex === -1) { // Header not found
+              newContent = currentContent + progressLogHeader + newLogEntry + "\n";
+            } else { // Header found
+              // Insert the new log entry immediately after the header line
+              const beforeHeaderAndHeader = currentContent.substring(0, headerIndex + progressLogHeader.trim().length);
+              const afterHeaderContent = currentContent.substring(headerIndex + progressLogHeader.trim().length);
+              newContent = beforeHeaderAndHeader + newLogEntry + afterHeaderContent;
+            }
+
+            await this.app.vault.modify(activeFile as TFile, newContent);
+            new Notice(`Progress snapshot logged to ${activeFile.basename}`);
+
+          }).catch(error => {
+            new Notice("Could not log goal progress. See console for details.");
+            console.error("Error logging goal progress snapshot:", error);
+          });
+        }
+        
+        return true; // Command is available
+      }
+    });
+
+    // Visualize Goal Hierarchy Command
+    this.addCommand({
+      id: 'visualize-goal-hierarchy',
+      name: 'Visualize Goal Hierarchy',
+      callback: async () => {
+        try {
+          const rootIdOrTitle = prompt("Enter Vision ID or Title to start hierarchy from (optional, leave blank for all top-level):");
+          // User might cancel prompt, in which case rootIdOrTitle will be null.
+          // buildGoalHierarchyText handles undefined or empty string for rootIdOrTitle.
+
+          const hierarchyText = await buildGoalHierarchyText(this.app, rootIdOrTitle || undefined);
+
+          // Check for short messages indicating no data
+          if (hierarchyText.length < 100 && (hierarchyText.includes("No goals found") || hierarchyText.includes("No top-level") || hierarchyText.includes("Could not find"))) {
+            new Notice(hierarchyText);
+          } else {
+            const sanitizedRootInfo = rootIdOrTitle ? rootIdOrTitle.replace(/[^\w\s-]/gi, '').replace(/\s+/g, '-') : 'All';
+            const timestamp = new Date().toISOString().replace(/[^\d]/g, '').slice(0, 14); // YYYYMMDDHHMMSS
+            const fileName = `Goal Hierarchy - ${sanitizedRootInfo} - ${timestamp}.md`;
+            
+            const dashboardDir = "life-planner/dashboards"; // Defined earlier, ensure it exists
+            const normalizedDashboardDir = normalizePath(dashboardDir);
+            if (!(await this.app.vault.adapter.exists(normalizedDashboardDir))) {
+                await this.app.vault.createFolder(normalizedDashboardDir);
+            }
+            
+            const filePath = normalizePath(`${normalizedDashboardDir}/${fileName}`);
+
+            const file = await this.app.vault.create(filePath, `# Goal Hierarchy: ${rootIdOrTitle || 'All Top-Level Goals'}\n\n${hierarchyText}`);
+            this.app.workspace.getLeaf(true).openFile(file);
+            new Notice(`Goal hierarchy view created: ${filePath}`);
+          }
+        } catch (error) {
+          new Notice("Error generating goal hierarchy: " + error.message);
+          console.error("Error generating goal hierarchy:", error);
+        }
+      }
+    });
+
 
     // Pomodoro Commands
     this.addCommand({

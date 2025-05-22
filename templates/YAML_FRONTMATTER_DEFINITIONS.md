@@ -95,26 +95,92 @@ key_learnings:
 ---
 ```
 
+## Personal Values Storage (`life-planner/values.md`)
+
+This file is used to list your core personal values. The plugin will read these values to help you align them with your goals. Each line or bullet point is treated as a distinct value.
+
+Example content for `life-planner/values.md`:
+```
+- Authenticity
+- Continuous Learning
+- Impact
+- Well-being
+- Creativity
+```
+*(The `life-planner/` prefix indicates it's at the root of the plugin's data directory, or vault root if the plugin operates there).*
+
 ## Goal Note (`goals/.../*.md`)
+
+This note type defines a specific goal, its properties, and how it aligns with broader visions or values.
+For tracking progress, especially for goals structured with milestones or sub-tasks, these can be listed directly within the body of this goal note using standard markdown checklist syntax (e.g., `- [ ] Uncompleted item`, `- [x] Completed item`). The plugin will use these checklists to calculate overall goal completion.
 
 ```yaml
 ---
-id: unique_goal_id # auto-generated
-title: "Specific Goal Title"
-type: goal # goal, milestone, vision
-status: in-progress # todo, in-progress, completed, archived
-parent_goal_id: "parent_id_if_milestone_or_sub_goal" # Optional
-vision_id: "related_vision_id" # Optional
-alignment_values: ["Value1", "Value2"]
-deadline: YYYY-MM-DD
-completion_date: YYYY-MM-DD # Optional
-template_type: SMART # SMART, OKR, WOOP (if applicable)
-# Specific fields for OKR
-# objective: "Objective"
+id: "goal-uuid-learn-instrument" # Unique identifier for the goal
+title: "Learn to Play the Guitar" # The specific title of the goal
+description: "Goal to learn basic guitar chords and play simple songs within 6 months." # Optional: A more detailed description of the goal
+type: goal # Type of note, e.g., goal, milestone, vision
+status: "inprogress" # Current status of the goal (e.g., todo, inprogress, done, archived)
+due_date: "2024-06-30" # Optional: Target completion date in YYYY-MM-DD format
+parent_goal_id: "goal-uuid-personal-development-2024" # Optional: ID of a parent goal if this is a sub-goal or milestone
+vision_id: "vision-become-musician" # Optional: ID of a broader vision this goal contributes to
+aligned_values: ["Continuous Learning", "Creativity"] # Optional: Personal values aligned with this goal
+completion_date: YYYY-MM-DD # Optional: Actual completion date
+template_type: "SMART" # Optional: Indicates the structure or methodology for this goal (e.g., SMART, OKR, WOOP)
+# Specific fields for OKR (if template_type is "OKR")
+# objective: "Objective" 
 # key_results:
 #   - kr: "Key Result 1"
 #     status: "on-track"
+# recurrence_rule: ... # Optional: If the goal itself is recurring (less common for goals, more for tasks)
+accountability_partner: "[[Contact Name]]" # Optional: Name or wikilink to a contact note for an accountability partner.
 # For tasks associated with this goal, they might be separate notes or listed here if simple.
+---
+```
+
+Below are examples of how the frontmatter would look for specific goal templates like OKR and WOOP.
+
+**Example: OKR Goal**
+```yaml
+---
+id: "goal-uuid-launch-v2"
+title: "Launch Life Planner v2.0"
+description: "Successfully launch version 2.0 of the Life Planner plugin with key new features."
+type: goal
+status: "inprogress"
+due_date: "2024-03-31"
+aligned_values: ["Impact", "Creativity"]
+template_type: "OKR"
+objective: "Successfully launch version 2.0 of the Life Planner plugin."
+key_results:
+  - kr_title: "Achieve 1000 beta signups."
+    kr_status: "on_track"
+    kr_target_value: 1000
+    kr_current_value: 450
+    kr_type: "number"
+  - kr_title: "Resolve all critical bugs reported by beta testers."
+    kr_status: "todo"
+  - kr_title: "Get initial positive feedback from 20 beta users."
+    kr_status: "todo"
+# Milestones/tasks for this OKR would be in the note body as checklists
+---
+```
+
+**Example: WOOP Goal**
+```yaml
+---
+id: "goal-uuid-focus-morning"
+title: "Focus on Most Important Task (MIT) in the Morning"
+description: "Implement the WOOP method to improve morning focus."
+type: goal
+status: "inprogress"
+aligned_values: ["Well-being", "Impact"]
+template_type: "WOOP"
+wish: "I will consistently complete my most important task every morning."
+outcome: "I will feel accomplished and make significant progress on my projects."
+obstacle: "Getting distracted by emails and social media first thing."
+plan: "If I feel the urge to check emails before my MIT, then I will put my phone in another room for 1 hour."
+# Progress for this WOOP goal could be tracked by how often the plan is successfully implemented, perhaps noted in daily notes.
 ---
 ```
 
