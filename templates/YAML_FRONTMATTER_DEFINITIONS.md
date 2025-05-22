@@ -17,10 +17,31 @@ habits_logged:
   habit_name_1: done
   habit_name_2: skipped
 pomodoro_sessions:
-  - project: "Project X"
-    duration: 25 # minutes
-    completed_at: "HH:MM"
+  - id: "pom-ts-1698400000000" # Example timestamp-based ID
+    startTime: "YYYY-MM-DDTH14:00:00"
+    duration: 25
+    task_title: "Draft blog post"
+    projectId: "project-alpha"
+    status: "completed"
+  - id: "pom-ts-1698402000000"
+    startTime: "YYYY-MM-DDTH14:30:00"
+    duration: 25
+    task_title: "Review PR #123"
+    status: "completed"
 reflections: "" # Brief reflection or link to a longer note
+time_blocks:
+  - id: "uuid-123-abc"
+    title: "Morning Focus Session"
+    startTime: "YYYY-MM-DDTH09:00:00"
+    endTime: "YYYY-MM-DDTH11:00:00"
+    allDay: false
+    taskId: "task-xyz-789"
+    notes: "Work on chapter 1"
+  - id: "uuid-456-def"
+    title: "Lunch with Team"
+    startTime: "YYYY-MM-DDTH12:30:00"
+    endTime: "YYYY-MM-DDTH13:30:00"
+    allDay: false
 ---
 ```
 
@@ -123,3 +144,44 @@ emotional_log_summary: positive # positive, neutral, negative
 tags: ["friend", "colleague"]
 ---
 ```
+
+## Task Note (Generic with Recurrence)
+
+This outlines a generic task note, particularly showcasing how recurrence rules are defined. Tasks might be standalone notes or embedded within project or daily notes.
+
+```yaml
+---
+id: "task-uuid-generate-report"
+title: "Generate Weekly Sales Report"
+due_date: "2023-11-03" # Current or next due date
+completion_date: "2023-10-27" # Last time it was completed
+status: "todo" # todo, inprogress, done
+project_id: "project-sales-q4" # Optional
+tags: ["reporting", "sales"]
+energy_level: "medium" # Optional. Values: "low", "medium", "high"
+
+# Recurrence Rule Definition
+recurrence_rule:
+  frequency: "weekly" # Options: "daily", "weekly", "monthly", "yearly" (yearly for later)
+  interval: 1 # Every 1 week
+  days_of_week: ["FR"] # Applicable if frequency is "weekly". e.g. ["MO", "WE", "FR"]
+  # day_of_month: 15 # Applicable if frequency is "monthly" (e.g., the 15th of every month)
+  start_date: "2023-10-06" # The date when this rule became active
+  end_date: "2024-12-31" # Optional: when this rule no longer applies
+
+# Example for a daily task:
+# recurrence_rule:
+#   frequency: "daily"
+#   interval: 2 # Every 2 days
+#   start_date: "2023-10-01"
+
+# Example for a monthly task (1st of every month):
+# recurrence_rule:
+#   frequency: "monthly"
+#   interval: 1
+#   day_of_month: 1
+#   start_date: "2023-10-01"
+---
+```
+
+This structure can be associated with tasks managed by the "Projects & Tasks Module" or any task that needs recurring behavior.

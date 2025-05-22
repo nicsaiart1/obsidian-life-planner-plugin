@@ -1,0 +1,44 @@
+/* In focus-mode.css */
+
+body.life-planner-focus-mode .workspace-ribbon {
+    display: none !important;
+}
+
+body.life-planner-focus-mode .mod-left-split,
+body.life-planner-focus-mode .workspace-split.mod-left-split {
+    display: none !important;
+}
+
+body.life-planner-focus-mode .mod-right-split,
+body.life-planner-focus-mode .workspace-split.mod-right-split {
+    display: none !important;
+}
+
+/* This is a general class for tab headers. Might affect plugin views if they also use this. */
+/* Consider more specific selectors if this is too aggressive. */
+body.life-planner-focus-mode .workspace-tabs .workspace-tab-header-container {
+    display: none !important; 
+}
+
+/* More targeted header hiding if possible - this hides the entire top bar of a view */
+/*
+body.life-planner-focus-mode .view-header {
+    display: none !important;
+}
+*/
+
+/* Hide the main status bar */
+body.life-planner-focus-mode .status-bar {
+    display: none !important;
+}
+
+/* Ensure the main workspace area takes up full space if sidebars are hidden */
+/*
+body.life-planner-focus-mode .mod-root .workspace-leaf-content {
+    /* This might not be needed if the focus UI is an overlay */
+    /* width: 100% !important; */
+    /* height: 100% !important; */
+/* } */
+
+/* The actual Focus Mode Svelte component will be an overlay, so it's less about
+   making space and more about hiding existing elements. */
