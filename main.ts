@@ -3,6 +3,8 @@ import { LifePlannerSettingTab, LifePlannerSettings, DEFAULT_SETTINGS } from './
 import { YearlyDashboardView, VIEW_TYPE_YEARLY_DASHBOARD } from './src/ui/YearlyDashboardView';
 import { EisenhowerMatrixModal } from './src/ui/EisenhowerMatrixModal';
 import { TimelineView, VIEW_TYPE_TIMELINE } from './src/ui/TimelineView';
+import { HabitTrackerViewObsidian, VIEW_TYPE_HABIT_TRACKER } from './src/modules/habits-routines/ui/HabitTrackerViewObsidian';
+import { RoutineBuilderViewObsidian, VIEW_TYPE_ROUTINE_BUILDER } from './src/modules/habits-routines/ui/RoutineBuilderViewObsidian';
 
 export default class LifePlannerPlugin extends Plugin {
   settings: LifePlannerSettings;
@@ -18,6 +20,14 @@ export default class LifePlannerPlugin extends Plugin {
     // Register Views
     this.registerView(VIEW_TYPE_YEARLY_DASHBOARD, (leaf) => new YearlyDashboardView(leaf));
     this.registerView(VIEW_TYPE_TIMELINE, (leaf) => new TimelineView(leaf));
+    this.registerView(
+        VIEW_TYPE_HABIT_TRACKER,
+        (leaf) => new HabitTrackerViewObsidian(leaf)
+    );
+    this.registerView(
+        VIEW_TYPE_ROUTINE_BUILDER,
+        (leaf) => new RoutineBuilderViewObsidian(leaf)
+    );
 
     // Add Commands
     this.addCommand({
@@ -28,6 +38,34 @@ export default class LifePlannerPlugin extends Plugin {
             const leaf = this.app.workspace.getLeaf(true); // Get a new leaf
             leaf.setViewState({
                 type: VIEW_TYPE_YEARLY_DASHBOARD,
+                active: true,
+            });
+            this.app.workspace.revealLeaf(leaf); // Reveal the leaf
+        },
+    });
+
+    this.addCommand({
+        id: 'open-routine-builder',
+        name: 'Routine Builder: Open',
+        callback: () => {
+            this.app.workspace.detachLeavesOfType(VIEW_TYPE_ROUTINE_BUILDER);
+            const leaf = this.app.workspace.getLeaf(true);
+            leaf.setViewState({
+                type: VIEW_TYPE_ROUTINE_BUILDER,
+                active: true,
+            });
+            this.app.workspace.revealLeaf(leaf);
+        },
+    });
+
+    this.addCommand({
+        id: 'open-habit-tracker',
+        name: 'Habit Tracker: Open',
+        callback: () => {
+            this.app.workspace.detachLeavesOfType(VIEW_TYPE_HABIT_TRACKER); // Close existing leaves first
+            const leaf = this.app.workspace.getLeaf(true); // Get a new leaf
+            leaf.setViewState({
+                type: VIEW_TYPE_HABIT_TRACKER,
                 active: true,
             });
             this.app.workspace.revealLeaf(leaf); // Reveal the leaf
@@ -75,6 +113,26 @@ export default class LifePlannerPlugin extends Plugin {
             active: true,
         });
         this.app.workspace.revealLeaf(leaf); // Reveal the leaf
+    });
+
+    this.addRibbonIcon('target', 'Open Habit Tracker', () => {
+        this.app.workspace.detachLeavesOfType(VIEW_TYPE_HABIT_TRACKER);
+        const leaf = this.app.workspace.getLeaf(true);
+        leaf.setViewState({
+            type: VIEW_TYPE_HABIT_TRACKER,
+            active: true,
+        });
+        this.app.workspace.revealLeaf(leaf);
+    });
+
+    this.addRibbonIcon('list-checks', 'Open Routine Builder', () => {
+        this.app.workspace.detachLeavesOfType(VIEW_TYPE_ROUTINE_BUILDER);
+        const leaf = this.app.workspace.getLeaf(true);
+        leaf.setViewState({
+            type: VIEW_TYPE_ROUTINE_BUILDER,
+            active: true,
+        });
+        this.app.workspace.revealLeaf(leaf);
     });
 
     // Example of using a placeholder
