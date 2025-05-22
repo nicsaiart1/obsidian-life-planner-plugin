@@ -1,6 +1,8 @@
 import { Plugin } from 'obsidian';
-import YearlyDashboard from './ui/YearlyDashboard.svelte'; // Optional test import
 import { LifePlannerSettingTab, LifePlannerSettings, DEFAULT_SETTINGS } from './src/settings'; // Adjusted path
+import { YearlyDashboardView, VIEW_TYPE_YEARLY_DASHBOARD } from './src/ui/YearlyDashboardView';
+import { EisenhowerMatrixModal } from './src/ui/EisenhowerMatrixModal';
+import { TimelineView, VIEW_TYPE_TIMELINE } from './src/ui/TimelineView';
 
 export default class LifePlannerPlugin extends Plugin {
   settings: LifePlannerSettings;
@@ -11,20 +13,73 @@ export default class LifePlannerPlugin extends Plugin {
 
     // Placeholder for future onload functionality
 
-    // Optional: Log the imported Svelte component to test build
-    console.log('YearlyDashboard component:', YearlyDashboard);
-
     this.addSettingTab(new LifePlannerSettingTab(this.app, this));
+
+    // Register Views
+    this.registerView(VIEW_TYPE_YEARLY_DASHBOARD, (leaf) => new YearlyDashboardView(leaf));
+    this.registerView(VIEW_TYPE_TIMELINE, (leaf) => new TimelineView(leaf));
+
+    // Add Commands
+    this.addCommand({
+        id: 'open-yearly-dashboard',
+        name: 'Open Yearly Dashboard',
+        callback: () => {
+            this.app.workspace.detachLeavesOfType(VIEW_TYPE_YEARLY_DASHBOARD); // Close existing leaves first
+            const leaf = this.app.workspace.getLeaf(true); // Get a new leaf
+            leaf.setViewState({
+                type: VIEW_TYPE_YEARLY_DASHBOARD,
+                active: true,
+            });
+            this.app.workspace.revealLeaf(leaf); // Reveal the leaf
+        },
+    });
+
+    this.addCommand({
+        id: 'open-eisenhower-matrix',
+        name: 'Open Eisenhower Matrix',
+        callback: () => {
+            new EisenhowerMatrixModal(this.app).open();
+        },
+    });
+
+    this.addCommand({
+        id: 'open-timeline-view',
+        name: 'Open Timeline View',
+        callback: () => {
+            this.app.workspace.detachLeavesOfType(VIEW_TYPE_TIMELINE); // Close existing leaves first
+            const leaf = this.app.workspace.getLeaf(true); // Get a new leaf
+            leaf.setViewState({
+                type: VIEW_TYPE_TIMELINE,
+                active: true,
+            });
+            this.app.workspace.revealLeaf(leaf); // Reveal the leaf
+        },
+    });
+
+    // Add Ribbon Icons
+    this.addRibbonIcon('calendar-days', 'Open Yearly Dashboard', () => {
+        this.app.workspace.detachLeavesOfType(VIEW_TYPE_YEARLY_DASHBOARD); // Close existing leaves first
+        const leaf = this.app.workspace.getLeaf(true); // Get a new leaf
+        leaf.setViewState({
+            type: VIEW_TYPE_YEARLY_DASHBOARD,
+            active: true,
+        });
+        this.app.workspace.revealLeaf(leaf); // Reveal the leaf
+    });
+
+    this.addRibbonIcon('gantt-chart', 'Open Timeline View', () => {
+        this.app.workspace.detachLeavesOfType(VIEW_TYPE_TIMELINE); // Close existing leaves first
+        const leaf = this.app.workspace.getLeaf(true); // Get a new leaf
+        leaf.setViewState({
+            type: VIEW_TYPE_TIMELINE,
+            active: true,
+        });
+        this.app.workspace.revealLeaf(leaf); // Reveal the leaf
+    });
 
     // Example of using a placeholder
     await generateDailyNotePlaceholder(new Date());
-    const yearlyDashboardView = new YearlyDashboardView(); // Renamed to avoid conflict
-    yearlyDashboardView.render();
-    const eisenhowerModal = new EisenhowerMatrixModal();
-    eisenhowerModal.open();
     await connectGoogleCalendarPlaceholder();
-    const timelineView = new TimelineView();
-    timelineView.render();
   }
 
   onunload() {
@@ -55,17 +110,6 @@ async function generateYearlyNotePlaceholder(date: Date): Promise<void> {
   console.log(`Generating yearly note for ${date}`);
 }
 
-// 2. Yearly Dashboard Structure
-export class YearlyDashboardView {
-  constructor() {
-    console.log('YearlyDashboardView initialized');
-  }
-  render() {
-    console.log('Render Yearly Dashboard');
-    /* Later, this will interact with Obsidian's view system */
-  }
-}
-
 // 3. Nested Goal Hierarchy Data Structures
 interface Task {
   id: string;
@@ -90,17 +134,6 @@ interface Vision {
   description: string;
 }
 
-// 4. Eisenhower Matrix View
-export class EisenhowerMatrixModal {
-  constructor() {
-    console.log('EisenhowerMatrixModal initialized');
-  }
-  open() {
-    console.log('Open Eisenhower Matrix Modal');
-    /* Later, this will use Obsidian's Modal class */
-  }
-}
-
 // 5. Calendar Sync Stubs
 async function connectGoogleCalendarPlaceholder(): Promise<void> {
   console.log('Placeholder: Connect to Google Calendar');
@@ -110,15 +143,4 @@ async function connectAppleCalendarPlaceholder(): Promise<void> {
 }
 async function syncEventsPlaceholder(): Promise<void> {
   console.log('Placeholder: Sync calendar events');
-}
-
-// 6. Timeline View Stub
-export class TimelineView {
-  constructor() {
-    console.log('TimelineView initialized');
-  }
-  render() {
-    console.log('Render Timeline View');
-    /* Later, this will use D3.js and Obsidian's view system */
-  }
 }
