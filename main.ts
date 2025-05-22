@@ -5,6 +5,8 @@ import { EisenhowerMatrixModal } from './src/ui/EisenhowerMatrixModal';
 import { TimelineView, VIEW_TYPE_TIMELINE } from './src/ui/TimelineView';
 import { HabitTrackerViewObsidian, VIEW_TYPE_HABIT_TRACKER } from './src/modules/habits-routines/ui/HabitTrackerViewObsidian';
 import { RoutineBuilderViewObsidian, VIEW_TYPE_ROUTINE_BUILDER } from './src/modules/habits-routines/ui/RoutineBuilderViewObsidian';
+import { JournalEditorObsidianView, VIEW_TYPE_JOURNAL_EDITOR } from './src/modules/journaling-reflection/ui/JournalEditorObsidianView';
+import { MoodLogObsidianView, VIEW_TYPE_MOOD_LOG } from './src/modules/journaling-reflection/ui/MoodLogObsidianView';
 
 export default class LifePlannerPlugin extends Plugin {
   settings: LifePlannerSettings;
@@ -28,6 +30,14 @@ export default class LifePlannerPlugin extends Plugin {
         VIEW_TYPE_ROUTINE_BUILDER,
         (leaf) => new RoutineBuilderViewObsidian(leaf)
     );
+    this.registerView(
+        VIEW_TYPE_JOURNAL_EDITOR,
+        (leaf) => new JournalEditorObsidianView(leaf)
+    );
+    this.registerView(
+        VIEW_TYPE_MOOD_LOG,
+        (leaf) => new MoodLogObsidianView(leaf)
+    );
 
     // Add Commands
     this.addCommand({
@@ -41,6 +51,34 @@ export default class LifePlannerPlugin extends Plugin {
                 active: true,
             });
             this.app.workspace.revealLeaf(leaf); // Reveal the leaf
+        },
+    });
+
+    this.addCommand({
+        id: 'open-mood-log',
+        name: 'Mood: Log & View',
+        callback: () => {
+            this.app.workspace.detachLeavesOfType(VIEW_TYPE_MOOD_LOG);
+            const leaf = this.app.workspace.getLeaf(true);
+            leaf.setViewState({
+                type: VIEW_TYPE_MOOD_LOG,
+                active: true,
+            });
+            this.app.workspace.revealLeaf(leaf);
+        },
+    });
+
+    this.addCommand({
+        id: 'open-journal-editor',
+        name: 'Journal: Open Editor',
+        callback: () => {
+            this.app.workspace.detachLeavesOfType(VIEW_TYPE_JOURNAL_EDITOR);
+            const leaf = this.app.workspace.getLeaf(true);
+            leaf.setViewState({
+                type: VIEW_TYPE_JOURNAL_EDITOR,
+                active: true,
+            });
+            this.app.workspace.revealLeaf(leaf);
         },
     });
 
@@ -120,6 +158,26 @@ export default class LifePlannerPlugin extends Plugin {
         const leaf = this.app.workspace.getLeaf(true);
         leaf.setViewState({
             type: VIEW_TYPE_HABIT_TRACKER,
+            active: true,
+        });
+        this.app.workspace.revealLeaf(leaf);
+    });
+
+    this.addRibbonIcon('smile', 'Open Mood Log', () => {
+        this.app.workspace.detachLeavesOfType(VIEW_TYPE_MOOD_LOG);
+        const leaf = this.app.workspace.getLeaf(true);
+        leaf.setViewState({
+            type: VIEW_TYPE_MOOD_LOG,
+            active: true,
+        });
+        this.app.workspace.revealLeaf(leaf);
+    });
+
+    this.addRibbonIcon('notebook-pen', 'Open Journal Editor', () => {
+        this.app.workspace.detachLeavesOfType(VIEW_TYPE_JOURNAL_EDITOR);
+        const leaf = this.app.workspace.getLeaf(true);
+        leaf.setViewState({
+            type: VIEW_TYPE_JOURNAL_EDITOR,
             active: true,
         });
         this.app.workspace.revealLeaf(leaf);
