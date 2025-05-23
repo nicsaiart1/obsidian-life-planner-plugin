@@ -8,6 +8,7 @@ import { RoutineBuilderViewObsidian, VIEW_TYPE_ROUTINE_BUILDER } from './src/mod
 import { JournalEditorObsidianView, VIEW_TYPE_JOURNAL_EDITOR } from './src/modules/journaling-reflection/ui/JournalEditorObsidianView';
 import { MoodLogObsidianView, VIEW_TYPE_MOOD_LOG } from './src/modules/journaling-reflection/ui/MoodLogObsidianView';
 import { ProjectsTasksObsidianView, VIEW_TYPE_PROJECTS_TASKS } from './src/modules/projects-tasks/ui/ProjectsTasksObsidianView';
+import { ContactsObsidianView, VIEW_TYPE_CONTACTS_LOGBOOK } from './src/modules/relationships-social/ui/ContactsObsidianView';
 
 export default class LifePlannerPlugin extends Plugin {
   settings: LifePlannerSettings;
@@ -43,6 +44,10 @@ export default class LifePlannerPlugin extends Plugin {
         VIEW_TYPE_PROJECTS_TASKS,
         (leaf) => new ProjectsTasksObsidianView(leaf)
     );
+    this.registerView(
+        VIEW_TYPE_CONTACTS_LOGBOOK,
+        (leaf) => new ContactsObsidianView(leaf)
+    );
 
     // Add Commands
     this.addCommand({
@@ -56,6 +61,20 @@ export default class LifePlannerPlugin extends Plugin {
                 active: true,
             });
             this.app.workspace.revealLeaf(leaf); // Reveal the leaf
+        },
+    });
+
+    this.addCommand({
+        id: 'open-contacts-logbook',
+        name: 'Contacts: Open Logbook',
+        callback: () => {
+            this.app.workspace.detachLeavesOfType(VIEW_TYPE_CONTACTS_LOGBOOK);
+            const leaf = this.app.workspace.getLeaf(true); // Get a new leaf or reuse an existing one
+            leaf.setViewState({
+                type: VIEW_TYPE_CONTACTS_LOGBOOK,
+                active: true,
+            });
+            this.app.workspace.revealLeaf(leaf); // Make sure the view is visible
         },
     });
 
@@ -177,6 +196,16 @@ export default class LifePlannerPlugin extends Plugin {
         const leaf = this.app.workspace.getLeaf(true);
         leaf.setViewState({
             type: VIEW_TYPE_HABIT_TRACKER,
+            active: true,
+        });
+        this.app.workspace.revealLeaf(leaf);
+    });
+
+    this.addRibbonIcon('users', 'Open Contacts Logbook', () => {
+        this.app.workspace.detachLeavesOfType(VIEW_TYPE_CONTACTS_LOGBOOK);
+        const leaf = this.app.workspace.getLeaf(true);
+        leaf.setViewState({
+            type: VIEW_TYPE_CONTACTS_LOGBOOK,
             active: true,
         });
         this.app.workspace.revealLeaf(leaf);
