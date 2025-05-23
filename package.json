@@ -27,12 +27,15 @@
     "obsidian": "^1.8.7",
     "svelte": "^5.33.1",
     "svelte-preprocess": "^6.0.3",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "@types/d3": "^7.4.3"
   },
   "dependencies": {
     "@fullcalendar/core": "^6.1.17",
     "@fullcalendar/daygrid": "^6.1.17",
     "@fullcalendar/interaction": "^6.1.17",
-    "@fullcalendar/timegrid": "^6.1.17"
+    "@fullcalendar/timegrid": "^6.1.17",
+    "chart.js": "^4.4.3",
+    "d3": "^7.9.0"
   }
 }

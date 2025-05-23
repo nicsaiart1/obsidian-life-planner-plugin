@@ -476,11 +476,9 @@ export default class LifePlannerPlugin extends Plugin {
   }
 
   async loadSettings() {
+    // Object.assign will ensure that any new settings defined in DEFAULT_SETTINGS
+    // are added to the loaded settings if they don't already exist.
     this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
-    // Add pomodoroDuration to settings if it's not there
-    if (this.settings.pomodoroDuration === undefined) {
-        this.settings.pomodoroDuration = 25; // Default duration
-    }
   }
 
   async saveSettings() {
