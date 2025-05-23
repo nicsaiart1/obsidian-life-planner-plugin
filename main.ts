@@ -9,6 +9,7 @@ import { JournalEditorObsidianView, VIEW_TYPE_JOURNAL_EDITOR } from './src/modul
 import { MoodLogObsidianView, VIEW_TYPE_MOOD_LOG } from './src/modules/journaling-reflection/ui/MoodLogObsidianView';
 import { ProjectsTasksObsidianView, VIEW_TYPE_PROJECTS_TASKS } from './src/modules/projects-tasks/ui/ProjectsTasksObsidianView';
 import { ContactsObsidianView, VIEW_TYPE_CONTACTS_LOGBOOK } from './src/modules/relationships-social/ui/ContactsObsidianView';
+import { KnowledgeManagementObsidianView, VIEW_TYPE_KNOWLEDGE_HUB } from './src/modules/knowledge-management/ui/KnowledgeManagementObsidianView';
 
 export default class LifePlannerPlugin extends Plugin {
   settings: LifePlannerSettings;
@@ -48,6 +49,10 @@ export default class LifePlannerPlugin extends Plugin {
         VIEW_TYPE_CONTACTS_LOGBOOK,
         (leaf) => new ContactsObsidianView(leaf)
     );
+    this.registerView(
+        VIEW_TYPE_KNOWLEDGE_HUB,
+        (leaf) => new KnowledgeManagementObsidianView(leaf)
+    );
 
     // Add Commands
     this.addCommand({
@@ -61,6 +66,20 @@ export default class LifePlannerPlugin extends Plugin {
                 active: true,
             });
             this.app.workspace.revealLeaf(leaf); // Reveal the leaf
+        },
+    });
+
+    this.addCommand({
+        id: 'open-knowledge-hub',
+        name: 'Knowledge Hub: Open',
+        callback: () => {
+            this.app.workspace.detachLeavesOfType(VIEW_TYPE_KNOWLEDGE_HUB);
+            const leaf = this.app.workspace.getLeaf(true); // Get a new leaf or reuse an existing one
+            leaf.setViewState({
+                type: VIEW_TYPE_KNOWLEDGE_HUB,
+                active: true,
+            });
+            this.app.workspace.revealLeaf(leaf); // Make sure the view is visible
         },
     });
 
@@ -196,6 +215,16 @@ export default class LifePlannerPlugin extends Plugin {
         const leaf = this.app.workspace.getLeaf(true);
         leaf.setViewState({
             type: VIEW_TYPE_HABIT_TRACKER,
+            active: true,
+        });
+        this.app.workspace.revealLeaf(leaf);
+    });
+
+    this.addRibbonIcon('brain', 'Open Knowledge Hub', () => {
+        this.app.workspace.detachLeavesOfType(VIEW_TYPE_KNOWLEDGE_HUB);
+        const leaf = this.app.workspace.getLeaf(true);
+        leaf.setViewState({
+            type: VIEW_TYPE_KNOWLEDGE_HUB,
             active: true,
         });
         this.app.workspace.revealLeaf(leaf);
