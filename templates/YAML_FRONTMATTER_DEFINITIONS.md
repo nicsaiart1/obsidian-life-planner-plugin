@@ -251,3 +251,111 @@ recurrence_rule:
 ```
 
 This structure can be associated with tasks managed by the "Projects & Tasks Module" or any task that needs recurring behavior.
+
+## Budget Note (`finance/budget/YYYY-MM Budget.md`)
+
+Budget notes are designed for monthly financial planning and tracking. They are typically stored in the `finance/budget/` directory with a name corresponding to the month and year (e.g., `2023-11 Budget.md`).
+
+These notes primarily use markdown tables. JSON-linked calculations are a potential future enhancement, but for now, all calculations are performed manually by the user.
+
+### Example Budget Note Template (`YYYY-MM Budget.md`):
+
+```markdown
+# Monthly Budget - {{YYYY-MM}}
+
+## Summary
+
+| Category          | Planned | Actual | Difference |
+|-------------------|---------|--------|------------|
+| Total Income      |         |        |            |
+| Total Expenses    |         |        |            |
+| **Net Balance**   |         |        |            |
+| *Savings/Deficit* |         |        |            |
+
+## Income
+
+| Item          | Planned | Actual | Difference | Notes |
+|---------------|---------|--------|------------|-------|
+| Salary        | 3000    |        |            |       |
+| Freelance Work| 500     |        |            |       |
+| **Total Income**| **3500**|        |            |       |
+
+## Fixed Expenses
+
+| Item          | Planned | Actual | Difference | Notes |
+|---------------|---------|--------|------------|-------|
+| Rent/Mortgage | 1200    |        |            |       |
+| Utilities     | 150     |        |            | (Water, Electricity, Gas) |
+| Internet      | 60      |        |            |       |
+| Phone Bill    | 50      |        |            |       |
+| Subscriptions | 40      |        |            | (See finance/subscriptions.md) |
+| **Total Fixed**| **1500**|        |            |       |
+
+## Variable Expenses
+
+| Item          | Planned | Actual | Difference | Notes |
+|---------------|---------|--------|------------|-------|
+| Groceries     | 400     |        |            |       |
+| Dining Out    | 150     |        |            |       |
+| Transportation| 100     |        |            | (Gas, Public Transport) |
+| Entertainment | 100     |        |            |       |
+| Personal Care | 50      |        |            |       |
+| **Total Variable**| **800**|        |            |       |
+
+## Financial Goals Contribution (Optional)
+
+| Goal          | Planned Contribution | Actual Contribution | Notes |
+|---------------|----------------------|---------------------|-------|
+| Savings Fund  | 200                  |                     |       |
+| Debt Repayment| 100                  |                     |       |
+| **Total Goals**| **300**             |                     |       |
+
+*(Note: All 'Actual' and 'Difference' columns, as well as 'Total' rows and the main 'Summary' table, are to be filled in manually by the user during this phase.)*
+```
+
+## Subscriptions Note (`finance/subscriptions.md`)
+
+This note serves as a central tracker for all recurring subscriptions, helping to manage expenses and renewal dates. It is typically located at `finance/subscriptions.md`.
+
+The information is stored in a markdown table with the following structure:
+
+```markdown
+| Service Name      | Renewal Date | Amount | Billing Cycle | Category      | Status   | Notes                           |
+|-------------------|--------------|--------|---------------|---------------|----------|---------------------------------|
+| Obsidian Sync     | 2024-12-01   | 8.00   | Monthly       | Work          | Active   | Core service                    |
+| Netflix Premium   | 2024-11-15   | 19.99  | Monthly       | Entertainment | Active   | Shared with family              |
+| Domain XYZ        | 2025-03-20   | 15.00  | Annually      | Work          | Active   | Auto-renews via Credit Card ABC |
+| Music Streaming   | 2024-11-05   | 9.99   | Monthly       | Entertainment | Trial    | Cancel before trial ends        |
+| Cloud Storage Pro | 2024-11-22   | 99.99  | Annually      | Utilities     | Active   | 2TB plan                        |
+```
+
+## Tax Preparation Conventions
+
+To facilitate the collection of tax-relevant information, this plugin relies on specific tagging conventions.
+
+### Tagging
+Notes containing information or documents for tax purposes should be tagged appropriately. Recommended tags include:
+-   `#tax`: For general tax-related items.
+-   `#tax/YYYY`: For items specific to a tax year (e.g., `#tax/2023`, `#tax/2024`).
+-   You can also add more specific tags like `#tax/receipt`, `#tax/invoice`, `#tax/medical`, etc., in conjunction with the year tag.
+
+### Attachments
+Any files embedded or linked within a note that carries a relevant tax tag (e.g., `#tax/2023`) will be considered part of the data collected for that tax period. Ensure attachments are properly linked within these notes.
+
+### Example
+A note for a business expense might look like this:
+
+```markdown
+---
+title: Client Dinner - Project Alpha
+date: 2023-05-15
+amount: 75.50
+category: meals
+tags: #project/alpha #tax/2023 #tax/expense/meals
+---
+
+Meeting with [[Client X]] to discuss Project Alpha.
+
+Receipt: ![[receipt_client_dinner_may15.pdf]] 
+```
+In this example, the note itself and the linked `receipt_client_dinner_may15.pdf` would be identified by a search for `#tax/2023`.
