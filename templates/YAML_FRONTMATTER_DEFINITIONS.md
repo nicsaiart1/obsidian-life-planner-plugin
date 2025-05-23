@@ -42,6 +42,22 @@ time_blocks:
     startTime: "YYYY-MM-DDTH12:30:00"
     endTime: "YYYY-MM-DDTH13:30:00"
     allDay: false
+
+# Sleep Log (Optional)
+sleep_start_time: "22:30"  # Time went to bed (e.g., HH:MM)
+sleep_end_time: "06:45"    # Time woke up (e.g., HH:MM)
+sleep_duration_hours: 8.25 # Optional: Total sleep duration in hours (can be calculated or manually entered)
+sleep_quality: "Good"      # e.g., Good, Fair, Poor, or 1-5 rating
+sleep_notes: "Woke up once briefly." # Optional notes about sleep
+
+# Meditation Sessions (Optional)
+meditation_sessions:
+  - duration_minutes: 20
+    type: "Mindfulness"
+    notes: "Felt calm and centered."
+  - duration_minutes: 10
+    type: "Guided Visualization"
+    notes: "Listened to a new guided track."
 ---
 ```
 
@@ -359,3 +375,59 @@ Meeting with [[Client X]] to discuss Project Alpha.
 Receipt: ![[receipt_client_dinner_may15.pdf]] 
 ```
 In this example, the note itself and the linked `receipt_client_dinner_may15.pdf` would be identified by a search for `#tax/2023`.
+
+## Symptom Journal Log Note (`health/symptom-journal/YYYY-MM-DD Symptom Log.md`)
+
+Symptom Journal Log Notes are intended for daily tracking of physical or mental symptoms. Each note typically covers a single day, allowing for detailed, timestamped entries. They are usually stored in a dedicated `health/symptom-journal/` directory, named with the date (e.g., `2023-11-15 Symptom Log.md`).
+
+### Example Frontmatter:
+
+```yaml
+---
+date: {{YYYY-MM-DD}} # Automatically set to the date of the log
+type: symptom-log
+tags: ["health", "symptom-tracking"] # Optional example tags
+---
+```
+
+### Suggested Body Structure:
+
+The body of the note should encourage structured, timestamped entries for each symptom occurrence or update.
+
+```markdown
+This log is for tracking symptoms throughout the day.
+
+### HH:MM AM/PM - Symptom Name
+- **Severity:** (e.g., Mild, Moderate, Severe, or 1-10 scale)
+- **Duration:** (e.g., Ongoing, 30 minutes, 2 hours)
+- **Description/Context:** (e.g., What it feels like, what you were doing)
+- **Triggers:** (e.g., Food, activity, stress)
+- **Relief Measures:** (e.g., Medication, rest, water)
+- **Notes:** (Any other details)
+
+---
+*(Repeat the above structure for each symptom occurrence.)*
+```
+
+## Cycle Journal Entry Note (`health/cycle-tracking/YYYY-MM-DD Cycle Entry.md`)
+
+Cycle Journal Entry Notes are designed for privacy-safe personal health journaling related to menstrual or other physiological cycles. Typically, one note is created per day when observations are made. These are usually stored in a dedicated `health/cycle-tracking/` directory, named with the date (e.g., `2023-11-15 Cycle Entry.md`).
+
+### Example Frontmatter:
+
+```yaml
+---
+date: {{YYYY-MM-DD}} # Automatically set to the date of the entry
+type: cycle-entry
+tags: ["health", "cycle-tracking"] # Optional example tags
+cycle_day: 14 # Optional: Day number in the current cycle (e.g., 1, 2, ..., 28)
+symptoms: # Optional: List of observed symptoms or feelings
+  - "bloating"
+  - "mood_elevated"
+  - "headache_mild"
+energy_level: "medium" # Optional: Subjective energy level (e.g., "low", "medium", "high")
+# Add other custom fields as needed, e.g., flow: "light", temperature: 36.5
+---
+```
+
+The body of the note is for freeform journaling about the day's observations, feelings, physical sensations, or any other relevant information. This allows for detailed, private reflection without a rigid structure imposed on the narrative part of the entry.

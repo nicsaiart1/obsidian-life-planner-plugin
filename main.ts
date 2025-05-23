@@ -1,4 +1,4 @@
-import { Plugin, Notice, TFile, normalizePath } from 'obsidian'; // Added Notice, TFile, normalizePath
+import { Plugin, Notice, TFile, normalizePath, App, Editor, MarkdownView } from 'obsidian'; // Ensured all are present
 import YearlyDashboard from './ui/YearlyDashboard.svelte'; // Optional test import
 import { LifePlannerSettingTab, LifePlannerSettings, DEFAULT_SETTINGS } from './src/settings'; // Adjusted path
 import { TimeBlockingView, TIME_BLOCKING_VIEW_TYPE } from './src/views/TimeBlockingView'; // Added
@@ -87,6 +87,259 @@ export default class LifePlannerPlugin extends Plugin {
             this.focusModeHostDiv.remove();
           }
           document.removeEventListener('keydown', this.escapeKeyHandler);
+        }
+      }
+    });
+
+const CYCLE_JOURNAL_BODY_TEMPLATE = (dateString: string) => `
+# Cycle Journal Entry - ${dateString}
+
+## Observations & Feelings:
+
+- 
+
+## Physical Sensations:
+
+- 
+
+## Notes:
+
+- 
+`;
+
+    // Create Today's Cycle Journal Entry Command
+    this.addCommand({
+      id: 'create-todays-cycle-journal-entry',
+      name: 'Create Today\'s Cycle Journal Entry',
+      callback: async () => {
+        try {
+          const today = new Date();
+          const year = today.getFullYear();
+          const month = String(today.getMonth() + 1).padStart(2, '0');
+          const day = String(today.getDate()).padStart(2, '0');
+          const dateString = `${year}-${month}-${day}`;
+
+          const cycleLogDir = "health/cycle-tracking";
+          const normalizedCycleLogDir = normalizePath(cycleLogDir);
+          const filePath = normalizePath(`${normalizedCycleLogDir}/${dateString} Cycle Entry.md`);
+
+          if (!(await this.app.vault.adapter.exists(normalizedCycleLogDir))) {
+            await this.app.vault.createFolder(normalizedCycleLogDir);
+          }
+
+          let file = this.app.vault.getAbstractFileByPath(filePath);
+          let isNewFile = false;
+
+          if (!(file instanceof TFile)) {
+            const frontmatter = `---
+date: ${dateString}
+type: cycle-entry
+tags: ["health", "cycle-tracking"]
+---
+`;
+            const fileContent = frontmatter + CYCLE_JOURNAL_BODY_TEMPLATE(dateString);
+            file = await this.app.vault.create(filePath, fileContent);
+            new Notice(`Cycle Journal Entry for ${dateString} created.`);
+            isNewFile = true;
+          } else {
+            new Notice(`Opening existing Cycle Journal Entry for ${dateString}.`);
+          }
+
+          if (!(file instanceof TFile)) {
+            new Notice("Error: Could not open or create Cycle Journal Entry note.");
+            console.error("Failed to open or create cycle entry log:", filePath);
+            return;
+          }
+          
+          // Open the file if it's new or not currently active
+          const activeLeaf = this.app.workspace.getActiveFile();
+          if (isNewFile || (activeLeaf?.path !== file.path)) {
+            await this.app.workspace.getLeaf(true).openFile(file as TFile);
+          }
+
+          // Prompt for optional fields
+          const cycleDayStr = prompt("Enter cycle day (optional, number):");
+          const symptomsStr = prompt("Enter symptoms (comma-separated, optional):");
+          const energyLevel = prompt("Enter energy level (low, medium, high - optional):");
+
+          let detailsUpdated = false;
+          if (cycleDayStr !== null || symptomsStr !== null || energyLevel !== null) {
+            await this.app.fileManager.processFrontMatter(file as TFile, (fm) => {
+              if (cycleDayStr !== null && cycleDayStr.trim() !== "") {
+                const cycleDayNum = parseInt(cycleDayStr.trim());
+                if (!isNaN(cycleDayNum)) {
+                  fm.cycle_day = cycleDayNum;
+                  detailsUpdated = true;
+                } else if (cycleDayStr.trim() !== "") { // only notify if user entered something invalid
+                    new Notice("Invalid cycle day. Please enter a number.");
+                }
+              }
+              if (symptomsStr !== null && symptomsStr.trim() !== "") {
+                fm.symptoms = symptomsStr.split(',').map(s => s.trim()).filter(s => s);
+                detailsUpdated = true;
+              }
+              if (energyLevel !== null && energyLevel.trim() !== "") {
+                fm.energy_level = energyLevel.trim().toLowerCase();
+                detailsUpdated = true;
+              }
+            });
+            if (detailsUpdated) {
+                new Notice("Cycle entry details updated.");
+            }
+          }
+
+        } catch (error) {
+          new Notice("Error managing Cycle Journal Entry: " + error.message);
+          console.error("Error in Create Today's Cycle Journal Entry command:", error);
+        }
+      }
+    });
+
+    // Log Sleep for Today Command
+    this.addCommand({
+      id: 'log-sleep-for-today',
+      name: 'Log Sleep for Today',
+      callback: async () => {
+        const dailyNoteFile = await getTodaysDailyNoteFile(this.app);
+        if (!dailyNoteFile) {
+          new Notice("Could not get or create today's daily note.");
+          return;
+        }
+
+        const startTime = prompt("Enter sleep start time (e.g., 22:30 or 10:30 PM):");
+        if (startTime === null) return; // User cancelled
+
+        const endTime = prompt("Enter sleep end time (e.g., 06:45 or 6:45 AM):");
+        if (endTime === null) return; // User cancelled
+
+        const quality = prompt("Enter sleep quality (e.g., Good, Fair, Poor, 3/5):");
+        if (quality === null) return; // User cancelled
+
+        const notes = prompt("Enter any sleep notes (optional):");
+        // notes can be null if user cancels, which is fine
+
+        try {
+          await this.app.fileManager.processFrontMatter(dailyNoteFile, (fm) => {
+            fm.sleep_start_time = startTime || undefined;
+            fm.sleep_end_time = endTime || undefined;
+            fm.sleep_quality = quality || undefined;
+            fm.sleep_notes = notes || undefined;
+          });
+          new Notice("Sleep logged to today's daily note.");
+        } catch (error) {
+          new Notice("Error logging sleep: " + error.message);
+          console.error("Error logging sleep:", error);
+        }
+      }
+    });
+
+    // Log Meditation Session for Today Command
+    this.addCommand({
+      id: 'log-meditation-session-for-today',
+      name: 'Log Meditation Session for Today',
+      callback: async () => {
+        const dailyNoteFile = await getTodaysDailyNoteFile(this.app);
+        if (!dailyNoteFile) {
+          new Notice("Could not get or create today's daily note.");
+          return;
+        }
+
+        const durationStr = prompt("Enter meditation duration in minutes:");
+        if (durationStr === null) return; // User cancelled
+        
+        const duration = parseInt(durationStr);
+        if (isNaN(duration) || duration <= 0) {
+          new Notice("Invalid duration. Please enter a positive number.");
+          return;
+        }
+
+        const type = prompt("Enter meditation type (e.g., Mindfulness, Guided):");
+        if (type === null) return; // User cancelled
+
+        const notes = prompt("Enter any meditation notes (optional):");
+        // notes can be null if user cancels
+
+        try {
+          await this.app.fileManager.processFrontMatter(dailyNoteFile, (fm) => {
+            fm.meditation_sessions = fm.meditation_sessions || [];
+            if (!Array.isArray(fm.meditation_sessions)) { // Ensure it's an array if it exists but isn't one
+                fm.meditation_sessions = [];
+            }
+            fm.meditation_sessions.push({ 
+              duration_minutes: duration, 
+              type: type || "", // Handle empty string if user submits empty prompt
+              notes: notes || undefined 
+            });
+          });
+          new Notice("Meditation session logged to today's daily note.");
+        } catch (error) {
+          new Notice("Error logging meditation session: " + error.message);
+          console.error("Error logging meditation session:", error);
+        }
+      }
+    });
+
+const SYMPTOM_LOG_BODY_TEMPLATE = (dateString: string) => `
+# Symptom Log - ${dateString}
+
+This log is for tracking symptoms throughout the day.
+
+### HH:MM AM/PM - Symptom Name
+- **Severity:** 
+- **Duration:** 
+- **Description/Context:** 
+- **Triggers:** 
+- **Relief Measures:** 
+- **Notes:** 
+
+---
+`;
+
+    // Create/Open Today's Symptom Log Command
+    this.addCommand({
+      id: 'create-open-todays-symptom-log',
+      name: 'Create/Open Today\'s Symptom Log',
+      callback: async () => {
+        try {
+          const today = new Date();
+          const year = today.getFullYear();
+          const month = String(today.getMonth() + 1).padStart(2, '0');
+          const day = String(today.getDate()).padStart(2, '0');
+          const dateString = `${year}-${month}-${day}`;
+
+          const symptomLogDir = "health/symptom-journal";
+          const normalizedSymptomLogDir = normalizePath(symptomLogDir);
+          const filePath = normalizePath(`${normalizedSymptomLogDir}/${dateString} Symptom Log.md`);
+
+          if (!(await this.app.vault.adapter.exists(normalizedSymptomLogDir))) {
+            await this.app.vault.createFolder(normalizedSymptomLogDir);
+          }
+
+          let fileToOpen = this.app.vault.getAbstractFileByPath(filePath);
+
+          if (!(fileToOpen instanceof TFile)) {
+            const frontmatter = `---
+date: ${dateString}
+type: symptom-log
+tags: ["health", "symptom-tracking"]
+---
+`;
+            const fileContent = frontmatter + SYMPTOM_LOG_BODY_TEMPLATE(dateString);
+            fileToOpen = await this.app.vault.create(filePath, fileContent);
+            new Notice(`Symptom Log for ${dateString} created.`);
+          } else {
+            new Notice(`Opening existing Symptom Log for ${dateString}.`);
+          }
+
+          if (fileToOpen instanceof TFile) {
+            await this.app.workspace.getLeaf(true).openFile(fileToOpen);
+          } else {
+            new Notice("Error opening Symptom Log note.");
+            console.error("Failed to open or create symptom log:", filePath);
+          }
+        } catch (error) {
+          new Notice("Error managing Symptom Log: " + error.message);
+          console.error("Error in Create/Open Today's Symptom Log command:", error);
         }
       }
     });
@@ -1029,6 +1282,48 @@ export default class LifePlannerPlugin extends Plugin {
 }
 
 // 1. Template Generation Placeholders
+// ... (existing placeholder functions) ...
+
+// Helper function to get or create today's daily note
+async function getTodaysDailyNoteFile(app: App): Promise<TFile | null> {
+  try {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    const dateString = `${year}-${month}-${day}`;
+
+    // For MVP, using a fixed path. Ideally, this would use Obsidian's daily note settings.
+    const dailyNoteDir = "daily"; 
+    const normalizedDailyNoteDir = normalizePath(dailyNoteDir);
+    const dailyNotePath = normalizePath(`${normalizedDailyNoteDir}/${dateString}.md`);
+
+    // Ensure the directory exists
+    if (!(await app.vault.adapter.exists(normalizedDailyNoteDir))) {
+      await app.vault.createFolder(normalizedDailyNoteDir);
+    }
+
+    let file = app.vault.getAbstractFileByPath(dailyNotePath);
+    if (file instanceof TFile) {
+      return file;
+    } else {
+      // File doesn't exist, create it with basic frontmatter
+      const frontmatter = `---
+date: ${dateString}
+type: daily-note
+---
+`;
+      const content = `${frontmatter}\n# Daily Note - ${dateString}\n\n`;
+      const newFile = await app.vault.create(dailyNotePath, content);
+      return newFile;
+    }
+  } catch (error) {
+    console.error("Error getting or creating today's daily note:", error);
+    // new Notice("Failed to get or create daily note: " + error.message); // Notice might be too noisy if called internally
+    return null;
+  }
+}
+
 async function generateDailyNotePlaceholder(date: Date): Promise<void> {
   console.log(`Generating daily note for ${date}`);
 }
